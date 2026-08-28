@@ -5,13 +5,9 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Clean Homebrew Taps
+      - name: Install Theos Manually
         run: |
-          brew untap aws/tap || true
-          brew update --local || true
-      - name: Setup Theos
-        run: |
-          bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
+          git clone --recursive https://github.com/theos/theos.git $HOME/theos
           echo "THEOS=$HOME/theos" >> $GITHUB_ENV
       - name: Build
         run: make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
