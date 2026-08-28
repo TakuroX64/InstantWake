@@ -5,13 +5,11 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Theos Manually
-        run: |
-          git clone --recursive https://github.com/theos/theos.git $HOME/theos
-          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
-      - name: Build
+      - name: Setup Theos
+        uses: beerpiss/theos-action@v1
+      - name: Build Tweak
         run: make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
-      - name: Upload
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: InstantWake
