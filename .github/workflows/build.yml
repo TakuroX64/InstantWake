@@ -2,27 +2,19 @@ name: Build Tweak
 on: workflow_dispatch
 jobs:
   build:
-    runs-on: ubuntu-latest
-    container: ubuntu:22.04
+    runs-on: macos-latest
     steps:
-      - name: Install Dependencies
-        run: |
-          apt-get update && apt-get install -y git curl make sudo build-essential pkg-config libarchive-tools
       - uses: actions/checkout@v4
-      - name: Setup Theos
+      - name: Setup Theos & SDKs
         run: |
-          git clone --recursive https://github.com/theos/theos.git /opt/theos
-          echo "THEOS=/opt/theos" >> $GITHUB_ENV
-      - name: Download iOS SDKs
-        run: |
-          mkdir -p /opt/theos/sdks
-          git clone --depth=1 https://github.com/theos/sdks.git /tmp/theos-sdks
-          cp -r /tmp/theos-sdks/*.sdk /opt/theos/sdks/
+          export THEOS=$HOME/theos
+          git clone --recursive https://github.com/theos/theos.git $THEOS
+          git clone --depth=1 https://github.com/theos/sdks.git $THEOS/sdks
+          echo "THEOS=$THEOS" >> $GITHUB_ENV
       - name: Build Tweak
         run: make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
-        working-directory: .
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: InstantWake
-          path: '**/packages/*.deb'
+          path: packages/*.deb
