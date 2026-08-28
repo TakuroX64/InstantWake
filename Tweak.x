@@ -50,12 +50,18 @@ static void wakeUnlock(void) {
     injectHIDButton(0x0C, 0x40); // Synthesize Home Button
 }
 
-// 1. Track exactly when the Lock Screen is actually on your screen
+// 1. Track visibility and force unlock animation speed
 %hook CSCoverSheetViewController
 
 - (void)viewWillAppear:(BOOL)animated {
     %orig;
     isCoverSheetVisible = YES;
+    self.view.layer.speed = 1.0; 
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    %orig;
+    self.view.layer.speed = 4.0; 
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
