@@ -1,0 +1,9 @@
+Package: com.jack.instantwake
+Name: InstantWake
+Depends: mobilesubstrate
+Version: 1.0
+Architecture: iphoneos-arm64
+Description: Instant wake to home for checkm8 iOS 16
+Maintainer: Jack
+Author: Mineek
+Section: Tweaks
