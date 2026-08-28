@@ -5,7 +5,6 @@
 #import <unistd.h>
 #import <notify.h>
 
-// Tells the compiler this class inherits a .view property
 @interface CSCoverSheetViewController : UIViewController
 @end
 
@@ -42,7 +41,8 @@ static void injectHIDButton(uint32_t page, uint32_t usage) {
     IOHIDEventRef down = _keyEvent(kCFAllocatorDefault, mach_absolute_time(), page, usage, true, 0);
     if (down) { _dispatch(client, down); CFRelease(down); }
     
-    usleep(50000);
+    // REDUCED: Was 50000 (50ms), now 2000 (2ms) for an instant click
+    usleep(2000);
     
     IOHIDEventRef up = _keyEvent(kCFAllocatorDefault, mach_absolute_time(), page, usage, false, 0);
     if (up) { _dispatch(client, up); CFRelease(up); }
@@ -51,41 +51,41 @@ static void injectHIDButton(uint32_t page, uint32_t usage) {
 }
 
 static void wakeUnlock(void) {
-    injectHIDButton(0x0C, 0x40); // Synthesize Home Button
+    injectHIDButton(0x0C, 0x40); 
 }
 
-// 1. Track visibility and force unlock animation speed
 %hook CSCoverSheetViewController
 
 - (void)viewWillAppear:(BOOL)animated {
     %orig;
     isCoverSheetVisible = YES;
-    self.view.layer.speed = 1.0; 
+    self.view.window.layer.speed = 1.0; 
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
     %orig;
-    self.view.layer.speed = 4.0; 
+    // Targets the master SpringBoard window physics, boosting transition speed by 10x
+    self.view.window.layer.speed = 10.0; 
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
     %orig;
     isCoverSheetVisible = NO;
+    // Instantly returns the OS to normal speed once unlocked
+    self.view.window.layer.speed = 1.0;
 }
 
 %end
 
-// 2. Listen for the raw hardware backlight power state
 %ctor {
     static int token;
     notify_register_dispatch("com.apple.springboard.hasBlankedScreen", &token, dispatch_get_main_queue(), ^(int t) {
         uint64_t state = 0;
         notify_get_state(t, &state);
         
-        // state == 0 means the screen just turned ON (woke up)
-        // If the screen wakes up AND the lock screen is showing, inject the unlock
         if (state == 0 && isCoverSheetVisible) {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.15 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            // REDUCED: Was 0.15s, now 0.02s for near-zero latency
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.02 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 wakeUnlock();
             });
         }
