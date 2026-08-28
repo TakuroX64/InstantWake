@@ -3,10 +3,13 @@
 #import <dlfcn.h>
 #import <mach/mach_time.h>
 #import <unistd.h>
+#import <notify.h>
 
 typedef struct __IOHIDEventSystemClient *IOHIDEventSystemClientRef;
 typedef struct __IOHIDEvent *IOHIDEventRef;
 typedef uint32_t IOHIDEventOptionBits;
+
+static BOOL isCoverSheetVisible = NO;
 
 static void injectHIDButton(uint32_t page, uint32_t usage) {
     typedef IOHIDEventSystemClientRef (*CreateWithTypeFn)(CFAllocatorRef, uint32_t, CFDictionaryRef);
@@ -47,19 +50,34 @@ static void wakeUnlock(void) {
     injectHIDButton(0x0C, 0x40); // Synthesize Home Button
 }
 
+// 1. Track exactly when the Lock Screen is actually on your screen
 %hook CSCoverSheetViewController
 
-// This method tells us exactly when the OLED panel changes power states
-- (void)setInScreenOffMode:(BOOL)off {
+- (void)viewWillAppear:(BOOL)animated {
     %orig;
-    
-    // If 'off' is NO (false), the screen is waking up from sleep.
-    if (!off) {
-        // Add a tiny 0.15-second delay to let the screen fully power on before injecting the unlock
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.15 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            wakeUnlock();
-        });
-    }
+    isCoverSheetVisible = YES;
+}
+
+- (void)viewDidDisappear:(BOOL)animated {
+    %orig;
+    isCoverSheetVisible = NO;
 }
 
 %end
+
+// 2. Listen for the raw hardware backlight power state
+%ctor {
+    static int token;
+    notify_register_dispatch("com.apple.springboard.hasBlankedScreen", &token, dispatch_get_main_queue(), ^(int t) {
+        uint64_t state = 0;
+        notify_get_state(t, &state);
+        
+        // state == 0 means the screen just turned ON (woke up)
+        // If the screen wakes up AND the lock screen is showing, inject the unlock
+        if (state == 0 && isCoverSheetVisible) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.15 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                wakeUnlock();
+            });
+        }
+    });
+}
