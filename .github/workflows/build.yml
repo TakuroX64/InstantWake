@@ -5,6 +5,8 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install ldid
+        run: brew install ldid
       - name: Setup Theos & SDKs
         run: |
           export THEOS=$HOME/theos
