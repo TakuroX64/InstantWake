@@ -48,10 +48,18 @@ static void wakeUnlock(void) {
 }
 
 %hook CSCoverSheetViewController
-- (void)viewWillAppear:(BOOL)animated {
+
+// This method tells us exactly when the OLED panel changes power states
+- (void)setInScreenOffMode:(BOOL)off {
     %orig;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.05 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        wakeUnlock();
-    });
+    
+    // If 'off' is NO (false), the screen is waking up from sleep.
+    if (!off) {
+        // Add a tiny 0.15-second delay to let the screen fully power on before injecting the unlock
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.15 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            wakeUnlock();
+        });
+    }
 }
+
 %end
