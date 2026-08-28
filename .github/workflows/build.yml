@@ -2,22 +2,17 @@ name: Build Tweak
 on: workflow_dispatch
 jobs:
   build:
-    runs-on: ubuntu-latest
-    container: ubuntu:22.04
+    runs-on: macos-latest
     steps:
-      - name: Install Dependencies
-        run: |
-          apt-get update && apt-get install -y git curl make sudo build-essential pkg-config libarchive-tools
       - uses: actions/checkout@v4
       - name: Setup Theos
         run: |
-          git clone --recursive https://github.com/theos/theos.git /opt/theos
-          echo "THEOS=/opt/theos" >> $GITHUB_ENV
-      - name: Build Tweak
+          bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
+          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+      - name: Build
         run: make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
-        working-directory: .
-      - name: Upload Artifact
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: InstantWake
-          path: '**/packages/*.deb'
+          path: packages/*.deb
