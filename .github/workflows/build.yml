@@ -13,6 +13,11 @@ jobs:
         run: |
           git clone --recursive https://github.com/theos/theos.git /opt/theos
           echo "THEOS=/opt/theos" >> $GITHUB_ENV
+      - name: Download iOS SDKs
+        run: |
+          mkdir -p /opt/theos/sdks
+          git clone --depth=1 https://github.com/theos/sdks.git /tmp/theos-sdks
+          cp -r /tmp/theos-sdks/*.sdk /opt/theos/sdks/
       - name: Build Tweak
         run: make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
         working-directory: .
