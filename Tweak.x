@@ -5,6 +5,10 @@
 #import <unistd.h>
 #import <notify.h>
 
+// Tells the compiler this class inherits a .view property
+@interface CSCoverSheetViewController : UIViewController
+@end
+
 typedef struct __IOHIDEventSystemClient *IOHIDEventSystemClientRef;
 typedef struct __IOHIDEvent *IOHIDEventRef;
 typedef uint32_t IOHIDEventOptionBits;
