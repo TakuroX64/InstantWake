@@ -8,7 +8,9 @@ jobs:
       - name: Setup Theos & SDKs
         run: |
           export THEOS=$HOME/theos
+          rm -rf $THEOS
           git clone --recursive https://github.com/theos/theos.git $THEOS
+          rm -rf $THEOS/sdks
           git clone --depth=1 https://github.com/theos/sdks.git $THEOS/sdks
           echo "THEOS=$THEOS" >> $GITHUB_ENV
       - name: Build Tweak
