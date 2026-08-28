@@ -14,7 +14,9 @@ jobs:
           git clone --recursive https://github.com/theos/theos.git /opt/theos
           echo "THEOS=/opt/theos" >> $GITHUB_ENV
       - name: Build Tweak
-        run: /opt/theos/bin/nicify --pack || make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
+        run: |
+          cd ${{ github.workspace }}
+          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
