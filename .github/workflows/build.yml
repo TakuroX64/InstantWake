@@ -5,11 +5,10 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fix Homebrew Untrusted Taps
+      - name: Clean Homebrew Taps
         run: |
-          git -C "$(brew --repo homebrew/core)" remote set-url origin https://github.com/Homebrew/homebrew-core
-          git -C "$(brew --repo homebrew/cask)" remote set-url origin https://github.com/Homebrew/homebrew-cask
-          brew update --force || true
+          brew untap aws/tap || true
+          brew update --local || true
       - name: Setup Theos
         run: |
           bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
